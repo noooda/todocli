@@ -1,50 +1,80 @@
 package io.github.noooda.todocli;
 
 import java.util.Scanner;
-import java.util.List;
-
 
 public class TodoCli {
-    TaskManager taskManager;
+    private final TaskManager taskManager;
+    private final Renderer renderer;
+    private final String[] commands = { "add", "delete", "list", "exit" };
 
-    public TodoCli(TaskManager taskManager) {
+    public TodoCli(TaskManager taskManager, Renderer renderer) {
         this.taskManager = taskManager;
+        this.renderer = renderer;
     }
 
     public void run() {
-        Scanner scanner = new Scanner(System.in);
-        String command;
+        try (Scanner scanner = new Scanner(System.in)) {
+            this.renderer.renderStartMessage(commands);
 
-        System.out.println("Todo CLI started.\n");
-        System.out.println("Available commands");
-        System.out.println("| add | delte | list | exit |\n");
+            while (true) {
+                this.renderer.renderPrompt();
+                String input = scanner.nextLine().trim();
 
-        while (true) {
-            System.out.print("> ");
-            command = scanner.nextLine();
+                if (input.isEmpty()) {
+                    this.renderer.renderCommandError("");
+                    continue;
+                }
 
-            if (command.equals("add")) {
-                System.out.print("Enter task description: ");
-                String description = scanner.nextLine();
-                this.taskManager.addTask(description);
+                String[] parts = input.split(" ", 2);
+                String command = parts[0];
+
+                if (command.equals("exit")) break;
+
+                handleCommand(command, parts.length > 1 ? parts[1] : "");
             }
-
-            if (command.equals("exit")) break; 
-
-            System.out.println(this.taskManager.getTasks());
-            // } else if (command.equals("list")) {
-            //     listTasks();
-            // } else if (command.equals("remove")) {
-            //     System.out.print("Enter task ID to remove: ");
-            //     int id = Integer.parseInt(scanner.nextLine());
-            //     removeTask(id);
-            // } else if (command.equals("exit")) {
-            //     break;
-            // } else {
-            //     System.out.println("Unknown command. Try again.");
-            // }
         }
+    }
 
-        scanner.close();
+    private void handleCommand(String command, String argument) {
+        switch (command) {
+            case "list" -> list();
+            case "add" -> handleAdd(argument);
+            case "delete" -> handleDelete(argument);
+            default -> this.renderer.renderCommandError(command);
+        }
+    }
+
+    private void handleAdd(String description) {
+        if (description.isBlank()) {
+            this.renderer.renderInvalidDescription();
+        } else {
+            add(description);
+        }
+    }
+
+    private void handleDelete(String id) {
+        if (!isInteger(id)) {
+            this.renderer.renderInvalidId();
+        } else {
+            delete(id);
+        }
+    }
+
+    private void list() {
+        this.renderer.renderTasks(this.taskManager.getTasks());
+    }
+
+    private void add(String description) {
+        this.taskManager.addTask(description);
+        list();
+    }
+
+    private void delete(String id) {
+        this.taskManager.removeTask(Integer.parseInt(id));
+        list();
+    }
+
+    private boolean isInteger(String str) {
+        return str != null && str.matches("\\d+");
     }
 }

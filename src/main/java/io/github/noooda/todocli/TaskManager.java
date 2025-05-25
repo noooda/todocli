@@ -1,24 +1,25 @@
 package io.github.noooda.todocli;
 
-import java.util.List;
-import java.util.ArrayList;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class TaskManager {
-    List<Task> tasks;
+    private int CURRENT_ID = 0;
+    private final Map<Integer, String> tasks;
 
     public TaskManager() {
-        this.tasks = new ArrayList<>();
+        this.tasks = new LinkedHashMap<>();
     }
 
-    public List<Task> getTasks() {
-        return tasks;
+    public Map<Integer, String> getTasks() {
+        return new LinkedHashMap<>(tasks);
     }
 
-    public List<Task> addTask(String description) {
-        int lastId = tasks.isEmpty() ? 0 : tasks.get(tasks.size() - 1).getId();
-        Task task = new Task(lastId+1, description);
-        tasks.add(task);
-        return tasks;
+    public void addTask(String description) {
+        tasks.put(++CURRENT_ID, description);
+    }
+
+    public void removeTask(int id) {
+        this.tasks.remove(id);
     }
 }
